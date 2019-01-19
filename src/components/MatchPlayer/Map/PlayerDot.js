@@ -1,6 +1,6 @@
 import React from 'react'
 import { clamp } from 'lodash'
-import { Arc, Circle, Group, Text, Label, Tag } from 'react-konva'
+import { Arc, Circle, Group, Text, Label, Tag, Line } from 'react-konva'
 import { toScale } from '../../../lib/canvas-math.js'
 
 const getBasePlayerColor = ({ colors }, marks, player) => {
@@ -68,6 +68,30 @@ const PlayerLabel = ({ visible, player, strokeColor }) => {
     )
 }
 
+const PlayerParachute = ({ visible, diameter, color }) => {
+    if (!visible) return null
+
+    return (
+        <Group
+            y={-diameter*2}
+            scale={{x:0.75,y:0.75}}
+        >
+            <Arc
+                fill={color}
+                innerRadius={0}
+                outerRadius={diameter}
+                angle={180}
+                rotation={180}
+            />
+            <Line
+                points={[-diameter, 0, 0, diameter, 0, 0, 0, diameter, diameter, 0]}
+                stroke={color}
+                strokeWidth={1}
+            />
+        </Group>
+    )
+}
+
 const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, showName }) => {
     const diameter = marks.isPlayerHovered(player.name) ? 11 : 8
     const scaledDiameter = diameter * clamp(mapScale / 1.4, 1, 1.3)
@@ -116,6 +140,11 @@ const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, sho
                 outerRadius={scaledDiameter / 2}
                 angle={(360 * health)}
                 {...mouseEvents}
+            />
+            <PlayerParachute
+                visible={player.vehicle==='Parachute'}
+                diameter={scaledDiameter / 2}
+                color={options.colors.dot.parachute}
             />
             <PlayerLabel
                 player={player}

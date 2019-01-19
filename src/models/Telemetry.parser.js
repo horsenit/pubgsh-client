@@ -82,6 +82,7 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
                 kills: 0,
                 damageDealt: 0,
                 items: [],
+                vehicle: null,
             }
 
             latestPlayerStates[p.name] = curState.players[p.name]
@@ -117,8 +118,33 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
             if (get(d, 'character.name')) {
                 const { name, location, health } = d.character
 
+                if (d.vehicle && d._T !== 'LogVehicleLeave') { // character + vehicle = character in vehicle
+                    const vehicle = d.vehicle.vehicleId
+                    // Pre-Vikendi parachuting:
+                    if (vehicle === 'ParachutePlayer_C') {
+                        setNewPlayerState(name, { vehicle: 'Parachute' })
+                    } else if (vehicle) {
+                        setNewPlayerState(name, { vehicle })
+                    }
+                }
+
                 setNewPlayerState(name, { health })
                 setNewPlayerLocation(name, { x: location.x, y: location.y })
+            }
+
+            if (d._T === 'LogVehicleLeave') {
+                const characterName = d.character.name
+                const vehicle = d.vehicle.vehicleId
+                if (vehicle === 'DummyTransportAircraft_C') {
+                    setNewPlayerState(characterName, { vehicle: 'Parachute' })
+                } else {
+                    setNewPlayerState(characterName, { vehicle: null })
+                }
+            }
+
+            if (d._T === 'LogParachuteLanding') {
+                const characterName = d.character.name
+                setNewPlayerState(characterName, { vehicle: null })
             }
 
             if (d._T === 'LogItemEquip') {
