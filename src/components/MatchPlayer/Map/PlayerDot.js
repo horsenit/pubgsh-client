@@ -188,6 +188,11 @@ const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, sho
                 diameter={scaledDiameter / 2}
                 color={options.colors.dot.parachute}
             />
+            <PlayerParachute
+                visible={player.vehicle==='Parachute'}
+                diameter={scaledDiameter / 2}
+                color={options.colors.dot.parachute}
+            />
             <PlayerLabel
                 player={player}
                 visible={showName || marks.isPlayerHovered(player.name)}
