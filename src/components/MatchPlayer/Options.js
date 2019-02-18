@@ -14,6 +14,7 @@ export const DEFAULT_OPTIONS = {
             knocked: '#FDFE0B',
             base: '#141414',
             parachute: 'rgba(255,255,255,0.6)',
+            driving: '#f00',
         },
         roster: {
             focused: '#8D79F3',
