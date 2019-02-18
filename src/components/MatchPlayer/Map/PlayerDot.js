@@ -92,6 +92,43 @@ const PlayerParachute = ({ visible, diameter, color }) => {
     )
 }
 
+const PlayerDrive = ({ visible, diameter, color }) => {
+    if (!visible) return null
+
+    const strokeWidth = 1
+    return (
+        <Group
+            scale={{x:0.75,y:0.75}}
+        >
+            <Line
+                points={[-diameter, 0, -diameter*0.25, 0]}
+                stroke={color}
+                strokeWidth={strokeWidth}
+            />
+            <Line
+                points={[diameter, 0, diameter*0.25, 0]}
+                stroke={color}
+                strokeWidth={strokeWidth}
+            />
+            <Line
+                points={[0, diameter*0.25, 0, diameter]}
+                stroke={color}
+                strokeWidth={strokeWidth}
+            />
+            <Circle
+                stroke={color}
+                strokeWidth={strokeWidth}
+                radius={diameter*0.25}
+            />
+            <Circle
+                stroke={color}
+                strokeWidth={strokeWidth}
+                radius={diameter}
+            />
+        </Group>
+    )
+}
+
 const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, showName }) => {
     const diameter = marks.isPlayerHovered(player.name) ? 11 : 8
     const scaledDiameter = diameter * clamp(mapScale / 1.4, 1, 1.3)
@@ -127,20 +164,25 @@ const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, sho
             y={toScale(pubgMapSize, mapSize, player.location.y)}
             scale={{ x: 1 / mapScale, y: 1 / mapScale }}
         >
-            <Circle
-                fill={getStatusColor(options, marks, player)}
-                radius={(scaledDiameter / 2) + 0}
-                {...mouseEvents}
-                stroke="#000000"
-                strokeWidth={0.75}
-            />
-            <Arc
-                fill={getPlayerColor(options, marks, player)}
-                innerRadius={0}
-                outerRadius={scaledDiameter / 2}
-                angle={(360 * health)}
-                {...mouseEvents}
-            />
+            <Group {...mouseEvents}>
+                <Circle
+                    fill={getStatusColor(options, marks, player)}
+                    radius={(scaledDiameter / 2) + 0}
+                    stroke="#000000"
+                    strokeWidth={0.75}
+                />
+                <Arc
+                    fill={getPlayerColor(options, marks, player)}
+                    innerRadius={0}
+                    outerRadius={scaledDiameter / 2}
+                    angle={(360 * health)}
+                />
+                <PlayerDrive
+                    visible={player.vehicle&&player.vehicle!=='Parachute'}
+                    diameter={scaledDiameter / 2}
+                    color={options.colors.dot.driving}
+                />
+            </Group>
             <PlayerParachute
                 visible={player.vehicle==='Parachute'}
                 diameter={scaledDiameter / 2}
