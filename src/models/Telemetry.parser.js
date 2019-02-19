@@ -83,6 +83,7 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
                 damageDealt: 0,
                 items: [],
                 vehicle: null,
+                vehicleDamage: 0,
             }
 
             latestPlayerStates[p.name] = curState.players[p.name]
@@ -120,12 +121,14 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
 
                 if (d.vehicle && d._T !== 'LogVehicleLeave') { // character + vehicle = character in vehicle
                     const vehicle = d.vehicle.vehicleId
+                    const vehicleDamage = (d.vehicle.healthPercent || 0) / 100
                     // Pre-Vikendi parachuting:
                     if (vehicle === 'ParachutePlayer_C') {
                         setNewPlayerState(name, { vehicle: 'Parachute' })
                     } else if (vehicle) {
                         setNewPlayerState(name, { vehicle })
                     }
+                    setNewPlayerState(name, { vehicleDamage })
                 }
 
                 setNewPlayerState(name, { health })

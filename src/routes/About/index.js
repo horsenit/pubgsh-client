@@ -53,6 +53,13 @@ export default () =>
             </section>
 
             <section>
+                <SectionHeader>Attribution</SectionHeader>
+                <p>
+                    <a href="https://thenounproject.com/term/car/84572/">Car by Jonathan Li from the Noun Project</a>
+                </p>
+            </section>
+
+            <section>
                 <SectionHeader>Changelog</SectionHeader>
 
                 <h5>2018-12-24</h5>
