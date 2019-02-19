@@ -1,7 +1,9 @@
 import React from 'react'
 import { clamp } from 'lodash'
-import { Arc, Circle, Group, Text, Label, Tag, Line } from 'react-konva'
+import { Arc, Circle, Group, Text, Label, Tag, Line, Image } from 'react-konva'
 import { toScale } from '../../../lib/canvas-math.js'
+import cpCar from '../../../assets/car.png'
+import cpCarDamage from '../../../assets/carDamage.png'
 
 const getBasePlayerColor = ({ colors }, marks, player) => {
     if (marks.focusedPlayer() === player.name) {
@@ -92,73 +94,110 @@ const PlayerParachute = ({ visible, diameter, color }) => {
     )
 }
 
-const PlayerDrive = ({ visible, diameter, color }) => {
+const PlayerDrive = ({ visible, diameter, image, damageImage, damagePercent }) => {
     if (!visible) return null
 
-    const strokeWidth = 1
+    const heightRatio = image && image.height / image.width || 1
+    const baseWidth = diameter * 4
+    const baseHeight = baseWidth * heightRatio
+    const offsetX = diameter * 2
+    const offsetY = diameter * 2
+
+    let width = baseWidth
+    let damageWidth = 0
+    let crop
+    let damageCrop
+    if (damageImage && image) {
+        width = damagePercent * baseWidth
+        damageWidth = baseWidth - width
+        const cropWidth = damagePercent * image.width
+        const cropHeight = image.height
+        crop = {
+            x: 0,
+            y: 0,
+            width: cropWidth,
+            height: cropHeight,
+        }
+        damageCrop = {
+            x: cropWidth,
+            y: 0,
+            width: image.width - cropWidth,
+            height: cropHeight,
+        }
+    }
     return (
         <Group
-            scale={{x:0.75,y:0.75}}
+            scale={{x:1,y:1}}
+            offsetY={diameter*2}
         >
-            <Line
-                points={[-diameter, 0, -diameter*0.25, 0]}
-                stroke={color}
-                strokeWidth={strokeWidth}
+            <Image
+                visible={width>0}
+                image={image}
+                offsetX={offsetX}
+                offsetY={offsetY}
+                width={width}
+                height={baseHeight}
+                crop={crop}
             />
-            <Line
-                points={[diameter, 0, diameter*0.25, 0]}
-                stroke={color}
-                strokeWidth={strokeWidth}
-            />
-            <Line
-                points={[0, diameter*0.25, 0, diameter]}
-                stroke={color}
-                strokeWidth={strokeWidth}
-            />
-            <Circle
-                stroke={color}
-                strokeWidth={strokeWidth}
-                radius={diameter*0.25}
-            />
-            <Circle
-                stroke={color}
-                strokeWidth={strokeWidth}
-                radius={diameter}
+            <Image
+                visible={damageWidth>0}
+                image={damageImage}
+                offsetX={offsetX-width}
+                offsetY={offsetY}
+                width={damageWidth}
+                height={baseHeight}
+                crop={damageCrop}
             />
         </Group>
     )
 }
 
-const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, showName }) => {
-    const diameter = marks.isPlayerHovered(player.name) ? 11 : 8
-    const scaledDiameter = diameter * clamp(mapScale / 1.4, 1, 1.3)
-    const health = player.health / 100
+class PlayerDot extends React.Component {
+    state = { carImage: null, carDamageImage: null }
 
-    const mouseEvents = {
-        onMouseOver(e) {
-            marks.setHoveredPlayer(player.name)
-        },
+    componentDidMount() {
+        const carImage = new window.Image()
+        carImage.src = cpCar
+        carImage.onload = () => {
+            this.setState({ carImage })
+        }
 
-        onMouseOut() {
-            marks.setHoveredPlayer(null)
-        },
-
-        onClick(e) {
-            const toToggle = [player.name]
-
-            if (e.evt.shiftKey) {
-                toToggle.push(...player.teammates)
-            }
-
-            if (marks.isPlayerTracked(player.name)) {
-                marks.setHoveredPlayer(null)
-            }
-
-            marks.toggleTrackedPlayer(...toToggle)
-        },
+        const carDamageImage = new window.Image()
+        carDamageImage.src = cpCarDamage
+        carDamageImage.onload = () => {
+            this.setState({ carDamageImage })
+        }
     }
 
-    return (
+    render() {
+        const { options, player, pubgMapSize, mapSize, marks, mapScale, showName } = this.props
+        const diameter = marks.isPlayerHovered(player.name) ? 11 : 8
+        const scaledDiameter = diameter * clamp(mapScale / 1.4, 1, 1.3)
+        const health = player.health / 100
+        const mouseEvents = {
+            onMouseOver(e) {
+                marks.setHoveredPlayer(player.name)
+            },
+
+            onMouseOut() {
+                marks.setHoveredPlayer(null)
+            },
+
+            onClick(e) {
+                const toToggle = [player.name]
+
+                if (e.evt.shiftKey) {
+                    toToggle.push(...player.teammates)
+                }
+
+                if (marks.isPlayerTracked(player.name)) {
+                    marks.setHoveredPlayer(null)
+                }
+
+                marks.toggleTrackedPlayer(...toToggle)
+            },
+        }
+        return (
         <Group
             x={toScale(pubgMapSize, mapSize, player.location.x)}
             y={toScale(pubgMapSize, mapSize, player.location.y)}
@@ -177,12 +216,14 @@ const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, sho
                     outerRadius={scaledDiameter / 2}
                     angle={(360 * health)}
                 />
-                <PlayerDrive
-                    visible={player.vehicle&&player.vehicle!=='Parachute'}
-                    diameter={scaledDiameter / 2}
-                    color={options.colors.dot.driving}
-                />
             </Group>
+            <PlayerDrive
+                visible={player.vehicle&&player.vehicle!=='Parachute'}
+                diameter={scaledDiameter / 2}
+                image={this.state.carImage}
+                damageImage={this.state.carDamageImage}
+                damagePercent={player.vehicleDamage}
+            />
             <PlayerParachute
                 visible={player.vehicle==='Parachute'}
                 diameter={scaledDiameter / 2}
@@ -194,7 +235,8 @@ const PlayerDot = ({ options, player, pubgMapSize, mapSize, marks, mapScale, sho
                 strokeColor={getPlayerColor(options, marks, player)}
             />
         </Group>
-    )
+        )
+    }
 }
 
 export default PlayerDot
