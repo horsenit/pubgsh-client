@@ -218,7 +218,7 @@ class PlayerDot extends React.Component {
                 />
             </Group>
             <PlayerDrive
-                visible={player.vehicle&&player.vehicle!=='Parachute'}
+                visible={player.vehicle&&!['Parachute','DummyTransportAircraft_C'].includes(player.vehicle)}
                 diameter={scaledDiameter / 2}
                 image={this.state.carImage}
                 damageImage={this.state.carDamageImage}
