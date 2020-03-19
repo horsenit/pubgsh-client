@@ -34,6 +34,20 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
     }
 
     const setNewPlayerState = (playerName, newVals) => {
+        if (!curState.players[playerName] && !latestPlayerStates[playerName]) {
+            // This captures a scenario where PUBG's matches API doesn't return
+            // someone who participated in this match. It will cause incorrect
+            // data, but at least it will render.
+            curState.players[playerName] = {
+                name: playerName,
+                teammates: [],
+                health: 100,
+                kills: 0,
+                damageDealt: 0,
+                items: [],
+            }
+        }
+
         if (!curState.players[playerName]) {
             // TODO: Needs cloneDeep once state holds nested values
             curState.players[playerName] = { ...latestPlayerStates[playerName] }
@@ -51,9 +65,9 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
     const getKilledBy = data => {
         const { damageTypeCategory, victim, killer } = data
         const isBlueZone = damageTypeCategory === 'Damage_BlueZone' ||
-            (victim.name === killer.name && victim.isInBlueZone)
+            (killer && victim && victim.name === killer.name && victim.isInBlueZone)
         const isRedZone = damageTypeCategory === 'Damage_Explosion_RedZone'
-        let killedBy = killer.name
+        let killedBy = killer && killer.name
 
         if (isBlueZone) {
             killedBy = 'Playzone'
@@ -214,11 +228,11 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
             if (d._T === 'LogPlayerKill') {
                 setNewPlayerState(d.victim.name, { status: 'dead' })
 
-                if (d.killer && d.killer.name && d.killer.name !== d.victim.name) {
+                if (d && d.killer && d.killer.name && d.killer.name !== d.victim.name) {
                     incrementPlayerStateVal(d.killer.name, 'kills', 1)
                 }
 
-                if (d.victim.name === focusedPlayerName) {
+                if (d && d.victim.name === focusedPlayerName) {
                     const killedBy = getKilledBy(d)
 
                     globalState.death = {
@@ -227,7 +241,7 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
                     }
                 }
 
-                if (d.killer && d.killer.name === focusedPlayerName) {
+                if (d && d.killer && d.killer.name === focusedPlayerName) {
                     globalState.kills.push({
                         msSinceEpoch,
                         victimName: d.victim.name,
@@ -429,8 +443,10 @@ export default function parseTelemetry(matchData, telemetry, focusedPlayerName) 
                         .map(p => ({ key: p.key, distance: distance(cp, p) }))
 
                     const matchingCp = minBy(cpDistances, 'distance')
-                    activePackages = cloneDeep(activePackages)
-                    activePackages.find(p => p.key === matchingCp.key).state = 'landed'
+                    if (matchingCp) {
+                        activePackages = cloneDeep(activePackages)
+                        activePackages.find(p => p.key === matchingCp.key).state = 'landed'
+                    }
                 }
             })
 

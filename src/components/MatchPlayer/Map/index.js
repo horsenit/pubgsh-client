@@ -16,9 +16,11 @@ const MAX_SCALE = 50
 const CLAMP_MAP = true // TODO: This should be a configurable option
 const MAP_SIZES = {
     Erangel_Main: 816000,
+    Baltic_Main: 816000,
     Desert_Main: 816000,
     Savage_Main: 408000,
     DihorOtok_Main: 612000,
+    Summerland_Main: 204000,
 }
 
 const StageWrapper = styled.div`
